@@ -2,6 +2,8 @@
 
 This MCP server allows you to access OpenAI's ChatGPT API directly from Claude Desktop.
 
+📝 **Read about why I built this project**: [I Built an AI That Talks to Other AIs: Demystifying the MCP Hype](https://medium.com/@billcockerill/i-built-an-ai-that-talks-to-other-ais-demystifying-the-mcp-hype-88dc03520552)
+
 ## Features
 
 - Call the ChatGPT API with customisable parameters
@@ -34,7 +36,7 @@ This MCP server allows you to access OpenAI's ChatGPT API directly from Claude D
    ```
 
    ```bash
-   .venv\Scripts\activate
+   .venv\\Scripts\\activate
    ```
    
    ```bash
