@@ -4,8 +4,8 @@ This MCP server allows you to access OpenAI's ChatGPT API directly from Claude D
 
 ## Features
 
-- Call the ChatGPT API with customizable parameters
-- Pass conversations between Claude and ChatGPT
+- Call the ChatGPT API with customisable parameters
+- Aks Claude and ChatGPT to talk to each other in a long running discussion!
 - Configure model versions, temperature, and other parameters
 - Use web search to get up-to-date information from the internet
 - Uses OpenAI's Responses API for automatic conversation state management
@@ -17,7 +17,7 @@ This MCP server allows you to access OpenAI's ChatGPT API directly from Claude D
 
 - Python 3.10 or higher
 - [Claude Desktop](https://claude.ai/download) application
-- OpenAI API key
+- [OpenAI API key](https://platform.openai.com/settings/organization/api-keys)
 - [uv](https://github.com/astral-sh/uv) for Python package management
 
 ### Installation
@@ -31,7 +31,13 @@ This MCP server allows you to access OpenAI's ChatGPT API directly from Claude D
 2. Set up a virtual environment and install dependencies using uv:
    ```bash
    uv venv
-   .venv\Scripts\activate   
+   ```
+
+   ```bash
+   .venv\Scripts\activate
+   ```
+   
+   ```bash
    uv pip install -r requirements.txt
    ```
 
@@ -79,15 +85,16 @@ The MCP server provides the following tools:
 
 ### Basic ChatGPT usage:
 
-To ask ChatGPT a question:
+Tell Claude to ask ChatGPT a question!
 ```
 Use the ask_chatgpt tool to answer: What is the best way to learn Python?
 ```
 
-To continue a conversation with ChatGPT:
+Tell Claude to have a conversation with ChatGPT:
 ```
-Use the ask_chatgpt tool with response_id "resp_abc123" to answer: Can you elaborate more on that point?
+Use the ask_chatgpt tool to have a two way conversation between you and ChatGPT about the topic that is most important to you.
 ```
+Note how in a turn taking conversation the response id allows ChatGPT to store the history of the conversation so its a genuine conversation and not just as series of API calls. This is called [conversation state](https://platform.openai.com/docs/guides/conversation-state?api-mode=responses#openai-apis-for-conversation-state).
 
 ### With web search:
 
@@ -96,9 +103,9 @@ For questions that may benefit from up-to-date information:
 Use the ask_chatgpt_with_web_search tool to answer: What are the latest developments in quantum computing?
 ```
 
-To continue a conversation that uses web search:
+Now try web search in agentic way to plan your perfect day out based on the weather!
 ```
-Use the ask_chatgpt_with_web_search tool with response_id "resp_abc123" to answer: Tell me more about the practical applications of these developments.
+Use the ask_chatgpt_with_web_search tool to find the weather tomorrow in New York, then based on that weather and what it returns, keep using the tool to build up a great day out for someone who loves food and parks
 ```
 
 ## How It Works
@@ -109,8 +116,6 @@ This tool utilizes OpenAI's Responses API, which automatically maintains convers
 2. Provides more reliable context tracking
 3. Improves the user experience by maintaining context across messages
 4. Allows access to the latest information from the web with the web search tool
-
-When you start a conversation, you'll receive a response ID (starting with "resp_"). To continue the conversation in your next message, simply include this response ID as a parameter to the `ask_chatgpt` or `ask_chatgpt_with_web_search` tool.
 
 ## License
 
