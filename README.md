@@ -18,6 +18,7 @@ This MCP server allows you to access OpenAI's ChatGPT API directly from Claude D
 - Python 3.10 or higher
 - [Claude Desktop](https://claude.ai/download) application
 - OpenAI API key
+- [uv](https://github.com/astral-sh/uv) for Python package management
 
 ### Installation
 
@@ -27,18 +28,12 @@ This MCP server allows you to access OpenAI's ChatGPT API directly from Claude D
    cd mcp-chatgpt-responses
    ```
 
-2. Set up a virtual environment:
+2. Install dependencies using uv:
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   uv pip install -r requirements.txt
    ```
 
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. Create a `.env` file in the root directory with your OpenAI API key:
+3. Create a `.env` file in the root directory with your OpenAI API key:
    ```
    OPENAI_API_KEY=your_openai_api_key_here
    ```
@@ -54,10 +49,18 @@ This MCP server allows you to access OpenAI's ChatGPT API directly from Claude D
    {
      "mcpServers": {
        "chatgpt": {
-         "command": "python",
-         "args": ["/path/to/mcp-chatgpt-responses/chatgpt_server.py"],
+         "command": "uv",
+         "args": [
+           "--directory",
+           "\\path\\to\\mcp-chatgpt-responses",
+           "run",
+           "chatgpt_server.py"
+         ],
          "env": {
-           "OPENAI_API_KEY": "your_openai_api_key_here"
+           "OPENAI_API_KEY": "your-api-key-here",
+           "DEFAULT_MODEL": "gpt-4o",
+           "DEFAULT_TEMPERATURE": "0.7",
+           "MAX_TOKENS": "1000"
          }
        }
      }
