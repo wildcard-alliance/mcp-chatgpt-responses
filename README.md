@@ -28,8 +28,9 @@ This MCP server allows you to access OpenAI's ChatGPT API directly from Claude D
    cd mcp-chatgpt-responses
    ```
 
-2. Install dependencies using uv:
+2. Set up a virtual environment and install dependencies using uv:
    ```bash
+   uv venv
    uv pip install -r requirements.txt
    ```
 
@@ -40,11 +41,10 @@ This MCP server allows you to access OpenAI's ChatGPT API directly from Claude D
 
 ### Using with Claude Desktop
 
-1. Configure Claude Desktop to use this MCP server by editing the configuration file at:
-   - macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`
-   - Windows: `%APPDATA%\Claude\claude_desktop_config.json`
+1. Configure Claude Desktop to use this MCP server by following the instructions at:
+   [MCP Quickstart Guide](https://modelcontextprotocol.io/quickstart/user#2-add-the-filesystem-mcp-server)
 
-2. Add the following configuration (adjust paths as needed):
+2. Add the following configuration to your Claude Desktop config file (adjust paths as needed):
    ```json
    {
      "mcpServers": {
@@ -115,15 +115,6 @@ This tool utilizes OpenAI's Responses API, which automatically maintains convers
 4. Allows access to the latest information from the web with the web search tool
 
 When you start a conversation, you'll receive a response ID (starting with "resp_"). To continue the conversation in your next message, simply include this response ID as a parameter to the `ask_chatgpt` or `ask_chatgpt_with_web_search` tool.
-
-## Configuration
-
-You can customize the server behavior by modifying the following environment variables:
-
-- `OPENAI_API_KEY`: Your OpenAI API key (required)
-- `DEFAULT_MODEL`: Default model to use (default: "gpt-4o")
-- `DEFAULT_TEMPERATURE`: Default temperature setting (default: 0.7)
-- `MAX_OUTPUT_TOKENS`: Maximum tokens in response (default: 1000)
 
 ## License
 
