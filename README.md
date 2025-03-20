@@ -31,12 +31,8 @@ This MCP server allows you to access OpenAI's ChatGPT API directly from Claude D
 2. Set up a virtual environment and install dependencies using uv:
    ```bash
    uv venv
+   .venv\Scripts\activate   
    uv pip install -r requirements.txt
-   ```
-
-3. Create a `.env` file in the root directory with your OpenAI API key:
-   ```
-   OPENAI_API_KEY=your_openai_api_key_here
    ```
 
 ### Using with Claude Desktop
