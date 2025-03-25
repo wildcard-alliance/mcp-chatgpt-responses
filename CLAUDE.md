@@ -10,6 +10,7 @@ This MCP server allows you to access OpenAI's ChatGPT API directly from Claude.
 - Use web search to get up-to-date information from the internet
 - Uses OpenAI's Responses API for automatic conversation state management
 - Requires your own OpenAI API key
+- Support for various OpenAI models including O1 family models
 
 ## Available Tools
 
@@ -18,6 +19,16 @@ The MCP server provides the following tools:
 1. `ask_chatgpt(prompt, model, temperature, max_output_tokens, response_id)` - Send a prompt to ChatGPT and get a response
 
 2. `ask_chatgpt_with_web_search(prompt, model, temperature, max_output_tokens, response_id)` - Send a prompt to ChatGPT with web search enabled to get up-to-date information
+
+## Supported Models
+
+- `gpt-4o` (default)
+- `gpt-4.5-preview`
+- `o1`
+- `o1-pro`
+- `o3-mini`
+
+Note: O1 family models (o1, o1-pro, o3-mini) do not support the temperature parameter, which is automatically omitted when using these models.
 
 ## Example Usage
 

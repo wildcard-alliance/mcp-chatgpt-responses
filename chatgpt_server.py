@@ -58,6 +58,9 @@ mcp = FastMCP(
     dependencies=["openai", "python-dotenv", "httpx", "pydantic"],
 )
 
+# Models that don't support temperature
+MODELS_WITHOUT_TEMPERATURE = ["o1", "o1-pro", "o3-mini"]
+
 
 class OpenAIRequest(BaseModel):
     """Model for OpenAI API request parameters"""
@@ -141,24 +144,29 @@ async def ask_chatgpt(
     ctx.info(f"Calling ChatGPT with model: {model}")
     
     try:
+        # Prepare kwargs for the API call
+        kwargs = {
+            "model": model,
+            "max_output_tokens": max_output_tokens,
+        }
+        
+        # Only add temperature if the model supports it
+        if model not in MODELS_WITHOUT_TEMPERATURE:
+            kwargs["temperature"] = temperature
+            ctx.info(f"Using temperature: {temperature}")
+        else:
+            ctx.info(f"Model {model} does not support temperature parameter, skipping it")
+        
         # Format input based on whether this is a new conversation or continuing one
         if response_id:
             # For continuing a conversation
-            response = await async_client.responses.create(
-                model=model,
-                previous_response_id=response_id,
-                input=[{"role": "user", "content": prompt}],
-                temperature=temperature,
-                max_output_tokens=max_output_tokens,
-            )
+            kwargs["previous_response_id"] = response_id
+            kwargs["input"] = [{"role": "user", "content": prompt}]
+            response = await async_client.responses.create(**kwargs)
         else:
             # For starting a new conversation
-            response = await async_client.responses.create(
-                model=model,
-                input=prompt,
-                temperature=temperature,
-                max_output_tokens=max_output_tokens,
-            )
+            kwargs["input"] = prompt
+            response = await async_client.responses.create(**kwargs)
         
         # Extract the text content using the helper function
         output_text = extract_text_from_response(response)
@@ -200,26 +208,30 @@ async def ask_chatgpt_with_web_search(
         # Define web search tool
         web_search_tool = {"type": "web_search"}
         
+        # Prepare kwargs for the API call
+        kwargs = {
+            "model": model,
+            "max_output_tokens": max_output_tokens,
+            "tools": [web_search_tool],
+        }
+        
+        # Only add temperature if the model supports it
+        if model not in MODELS_WITHOUT_TEMPERATURE:
+            kwargs["temperature"] = temperature
+            ctx.info(f"Using temperature: {temperature}")
+        else:
+            ctx.info(f"Model {model} does not support temperature parameter, skipping it")
+        
         # Format input based on whether this is a new conversation or continuing one
         if response_id:
             # For continuing a conversation
-            response = await async_client.responses.create(
-                model=model,
-                previous_response_id=response_id,
-                input=[{"role": "user", "content": prompt}],
-                temperature=temperature,
-                max_output_tokens=max_output_tokens,
-                tools=[web_search_tool],
-            )
+            kwargs["previous_response_id"] = response_id
+            kwargs["input"] = [{"role": "user", "content": prompt}]
+            response = await async_client.responses.create(**kwargs)
         else:
             # For starting a new conversation
-            response = await async_client.responses.create(
-                model=model,
-                input=prompt,
-                temperature=temperature,
-                max_output_tokens=max_output_tokens,
-                tools=[web_search_tool],
-            )
+            kwargs["input"] = prompt
+            response = await async_client.responses.create(**kwargs)
         
         # Log response for debugging
         logger.info(f"Web search response ID: {response.id}")
