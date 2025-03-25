@@ -46,9 +46,10 @@ async_client = AsyncOpenAI(api_key=api_key)
 # Model list for resource
 AVAILABLE_MODELS = [
     "gpt-4o",
-    "gpt-4-turbo",
-    "gpt-4",
-    "gpt-3.5-turbo",
+    "gpt-4.5-preview",
+    "o1",
+    "o1-pro",
+    "o3-mini"
 ]
 
 # Initialize FastMCP server
