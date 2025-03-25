@@ -27,3 +27,16 @@ ENV/
 
 # Conversation cache
 conversations/
+
+# Test files
+test_*.py
+*_test.py
+test_*.sh
+*_test.sh
+*_test_result.txt
+test_results.txt
+simple_test.py
+o1_test_result.txt
+
+# Process ID files
+*.pid
