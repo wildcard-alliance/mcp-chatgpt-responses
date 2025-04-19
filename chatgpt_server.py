@@ -70,6 +70,20 @@ MODELS_WITHOUT_TEMPERATURE = [
     "o4-mini-high"
 ]
 
+# Note: Previously some models were incompatible with web search using web_search_preview.
+# Now we use the standard web_search tool which has better compatibility across models.
+
+# Models that don't support web search
+MODELS_WITHOUT_WEB_SEARCH = [
+    "gpt-4o", "chatgpt-4o-latest",
+    "o1", "o1-pro", 
+    "o3", "o3-mini", 
+    "o4-mini-high"
+]
+
+# Fallback model for web search when requested model doesn't support it
+WEB_SEARCH_FALLBACK_MODEL = "gpt-4-turbo"
+
 
 class OpenAIRequest(BaseModel):
     """Model for OpenAI API request parameters"""
@@ -300,8 +314,48 @@ async def ask_chatgpt_with_web_search(
         # Log the final API parameters
         ctx.info(f"Web search API parameters: {json.dumps(kwargs)}")
         
-        # Call the API
-        response = await async_client.responses.create(**kwargs)
+        # Wrap the API call in a try/except to handle specific "unsupported model" errors
+        try:
+            # Call the API
+            response = await async_client.responses.create(**kwargs)
+        except Exception as model_error:
+            error_str = str(model_error)
+            # Check if this is a "model doesn't support web search" error
+            if "not supported with" in error_str and "web_search" in error_str:
+                # If the model doesn't support web search, use a fallback approach:
+                # Use the same model but with system prompt asking to provide current knowledge
+                ctx.info(f"Web search not supported with model {model}, using standard API with modified prompt")
+                
+                # Clear the tools parameter and replace with a modified prompt
+                modified_prompt = (
+                    f"The user is asking about recent information that might be beyond your training data. "
+                    f"Please provide the most up-to-date information you have on this topic, "
+                    f"and clearly state if you think this information might be outdated: {prompt}"
+                )
+                
+                # Remove tools parameter
+                if "tools" in additional_params:
+                    del additional_params["tools"]
+                
+                # Update input with modified prompt
+                if response_id:
+                    additional_params["input"] = [{"role": "user", "content": modified_prompt}]
+                else:
+                    additional_params["input"] = modified_prompt
+                
+                # Recreate parameters
+                kwargs = create_safe_api_params(
+                    model=model, 
+                    max_output_tokens=max_output_tokens,
+                    temperature=temperature,
+                    additional_params=additional_params
+                )
+                
+                ctx.info(f"Using standard API with parameters: {json.dumps(kwargs)}")
+                response = await async_client.responses.create(**kwargs)
+            else:
+                # If it's a different error, re-raise it
+                raise
         
         # Log response for debugging
         logger.info(f"Web search response ID: {response.id}")
