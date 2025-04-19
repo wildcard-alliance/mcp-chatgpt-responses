@@ -7,9 +7,11 @@ Uses the OpenAI Responses API for simplified conversation state management.
 """
 
 import os
+import sys
 import json
 import logging
-from typing import Optional, List, Dict, Any, Union
+import asyncio
+from typing import Optional, List, Dict, Any, Union, Callable
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
@@ -17,6 +19,19 @@ from openai import OpenAI, AsyncOpenAI
 from pydantic import BaseModel, Field
 
 from mcp.server.fastmcp import FastMCP, Context
+
+# Create a sync Context proxy for testing
+class SyncContext:
+    def __init__(self, id: str, info: Callable, error: Callable):
+        self.id = id
+        self._info = info
+        self._error = error
+    
+    def info(self, message: str):
+        self._info(message)
+        
+    def error(self, message: str):
+        self._error(message)
 
 # Load environment variables
 load_dotenv()
@@ -373,6 +388,24 @@ async def ask_chatgpt_with_web_search(
         return error_message
 
 
+async def test_web_search_fallback():
+    """Test function to verify that web search fallback works with incompatible models"""
+    try:
+        logger.info("Running web search fallback test...")
+        # Use the SyncContext for testing
+        sync_ctx = SyncContext(id="test", info=logger.info, error=logger.error)
+        result = await ask_chatgpt_with_web_search(
+            prompt="What is Veloren?", 
+            model="chatgpt-4o-latest",
+            ctx=sync_ctx
+        )
+        logger.info(f"Test results (first 100 chars): {result[:100]}...")
+        logger.info("Web search fallback test completed successfully!")
+        return True
+    except Exception as e:
+        logger.error(f"Web search fallback test failed: {e}")
+        return False
+
 if __name__ == "__main__":
     print("ChatGPT MCP Server starting...", flush=True)
     logger.info("ChatGPT MCP Server initializing...")
@@ -386,6 +419,12 @@ if __name__ == "__main__":
     logger.info(f"Models without temperature: {MODELS_WITHOUT_TEMPERATURE}")
     logger.info(f"Default model: {DEFAULT_MODEL}")
     logger.info(f"Default temperature: {DEFAULT_TEMPERATURE}")
+    
+    # Run test if TEST_WEB_SEARCH environment variable is set
+    if os.environ.get('TEST_WEB_SEARCH', '').lower() in ('1', 'true', 'yes'):
+        import asyncio
+        asyncio.run(test_web_search_fallback())
+        sys.exit(0)
     
     # Run the server
     try:
