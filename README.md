@@ -4,6 +4,21 @@ This MCP server allows you to access OpenAI's ChatGPT API directly from Claude D
 
 📝 **Read about why I built this project**: [I Built an AI That Talks to Other AIs: Demystifying the MCP Hype](https://medium.com/@billcockerill/i-built-an-ai-that-talks-to-other-ais-demystifying-the-mcp-hype-88dc03520552)
 
+## Supported Models
+
+- `gpt-4o` (default)
+- `gpt-4.5-preview`
+- `gpt-4.1`
+- `gpt-4.1-2025-04-14`
+- `chatgpt-4o-latest`
+- `o1`
+- `o1-pro`
+- `o3`
+- `o3-mini`
+- `o4-mini-high`
+
+Note: Several models including O1 family models (o1, o1-pro), O3 family models (o3, o3-mini), and O4 family models (o4-mini-high) do not support the temperature parameter, which is automatically omitted when using these models.
+
 ## Features
 
 - Call the ChatGPT API with customisable parameters
@@ -118,6 +133,21 @@ This tool utilizes OpenAI's Responses API, which automatically maintains convers
 2. Provides more reliable context tracking
 3. Improves the user experience by maintaining context across messages
 4. Allows access to the latest information from the web with the web search tool
+
+## Project Structure
+
+- `/` - Root directory containing the main server implementation
+  - `chatgpt_server.py` - The main MCP server implementation
+  - `chatgpt-wrapper.sh` - Shell script for starting the server
+  - `requirements.txt` - Python dependencies
+- `/tests` - Test scripts and utilities
+  - `simple_test.py` - Simple test script for the OpenAI API
+  - `test_openai.py` - Direct test for OpenAI API connectivity
+  - `cli_test.py` - CLI test for the full MCP server
+
+## Testing
+
+See the [tests/README.md](tests/README.md) file for detailed information on running and using the test scripts.
 
 ## License
 

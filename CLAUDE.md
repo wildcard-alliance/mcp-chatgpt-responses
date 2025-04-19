@@ -24,11 +24,16 @@ The MCP server provides the following tools:
 
 - `gpt-4o` (default)
 - `gpt-4.5-preview`
+- `gpt-4.1`
+- `gpt-4.1-2025-04-14`
+- `chatgpt-4o-latest`
 - `o1`
 - `o1-pro`
+- `o3`
 - `o3-mini`
+- `o4-mini-high`
 
-Note: O1 family models (o1, o1-pro, o3-mini) do not support the temperature parameter, which is automatically omitted when using these models.
+Note: Several models including O1 family models (o1, o1-pro), O3 family models (o3, o3-mini), and O4 family models (o4-mini-high) do not support the temperature parameter, which is automatically omitted when using these models.
 
 ## Example Usage
 
