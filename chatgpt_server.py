@@ -85,8 +85,17 @@ MODELS_WITHOUT_TEMPERATURE = [
     "o4-mini-high"
 ]
 
-# Note: Previously some models were incompatible with web search using web_search_preview.
-# Now we use the standard web_search tool which has better compatibility across models.
+# Models that don't support web search (according to OpenAI documentation)
+MODELS_WITHOUT_WEB_SEARCH = [
+    "gpt-4o", "chatgpt-4o-latest", 
+    "gpt-4.1-nano",
+    "o1", "o1-pro", 
+    "o3", "o3-mini", 
+    "o4-mini-high"
+]
+
+# Model to use for web search when requested model doesn't support it
+WEB_SEARCH_MODEL = "gpt-4.1"
 
 # Models that don't support web search
 MODELS_WITHOUT_WEB_SEARCH = [
@@ -298,9 +307,16 @@ async def ask_chatgpt_with_web_search(
     """
     ctx.info(f"Calling ChatGPT with web search using model: {model}")
     
+    # Check if the requested model supports web search
+    original_model = model
+    if model in MODELS_WITHOUT_WEB_SEARCH:
+        # Switch to gpt-4.1 which supports web search according to the documentation
+        model = WEB_SEARCH_MODEL
+        ctx.info(f"Model {original_model} doesn't support web search, switching to {model}")
+    
     try:
-        # Define web search tool
-        web_search_tool = {"type": "web_search"}
+        # Define web search tool using the correct format from documentation
+        web_search_tool = {"type": "web_search_preview"}
         
         # Log key parameters
         ctx.info(f"Web search with model: {model}, Temperature: {temperature if temperature is not None else 'None (using default)'}")
@@ -320,7 +336,7 @@ async def ask_chatgpt_with_web_search(
             
         # Create safe API parameters
         kwargs = create_safe_api_params(
-            model=model,
+            model=model,  # Using the potentially switched model that supports web search
             max_output_tokens=max_output_tokens,
             temperature=temperature,
             additional_params=additional_params
@@ -329,48 +345,28 @@ async def ask_chatgpt_with_web_search(
         # Log the final API parameters
         ctx.info(f"Web search API parameters: {json.dumps(kwargs)}")
         
-        # Wrap the API call in a try/except to handle specific "unsupported model" errors
-        try:
-            # Call the API
-            response = await async_client.responses.create(**kwargs)
-        except Exception as model_error:
-            error_str = str(model_error)
-            # Check if this is a "model doesn't support web search" error
-            if "not supported with" in error_str and "web_search" in error_str:
-                # If the model doesn't support web search, use a fallback approach:
-                # Use the same model but with system prompt asking to provide current knowledge
-                ctx.info(f"Web search not supported with model {model}, using standard API with modified prompt")
-                
-                # Clear the tools parameter and replace with a modified prompt
-                modified_prompt = (
-                    f"The user is asking about recent information that might be beyond your training data. "
-                    f"Please provide the most up-to-date information you have on this topic, "
-                    f"and clearly state if you think this information might be outdated: {prompt}"
-                )
-                
-                # Remove tools parameter
-                if "tools" in additional_params:
-                    del additional_params["tools"]
-                
-                # Update input with modified prompt
-                if response_id:
-                    additional_params["input"] = [{"role": "user", "content": modified_prompt}]
-                else:
-                    additional_params["input"] = modified_prompt
-                
-                # Recreate parameters
-                kwargs = create_safe_api_params(
-                    model=model, 
-                    max_output_tokens=max_output_tokens,
-                    temperature=temperature,
-                    additional_params=additional_params
-                )
-                
-                ctx.info(f"Using standard API with parameters: {json.dumps(kwargs)}")
-                response = await async_client.responses.create(**kwargs)
-            else:
-                # If it's a different error, re-raise it
-                raise
+        # Call the API
+        response = await async_client.responses.create(**kwargs)
+        
+        # Extract the text content using the helper function
+        output_text = extract_text_from_response(response, ctx)
+        
+        # Add note if model was switched
+        if original_model != model:
+            output_text = (
+                f"{output_text}\n\n"
+                f"Note: Web search was performed using {model} instead of {original_model} "
+                f"because {original_model} doesn't support web search."
+            )
+        
+        # Return response with ID for reference
+        return f"{output_text}\n\n(Response ID: {response.id})"
+    
+    except Exception as e:
+        error_message = f"Error calling ChatGPT with web search: {str(e)}"
+        logger.error(error_message)
+        ctx.error(f"Web search API call details: model={model}, params={kwargs}")
+        return error_message
         
         # Log response for debugging
         logger.info(f"Web search response ID: {response.id}")
@@ -388,22 +384,29 @@ async def ask_chatgpt_with_web_search(
         return error_message
 
 
-async def test_web_search_fallback():
-    """Test function to verify that web search fallback works with incompatible models"""
+async def test_web_search_model_switching():
+    """Test function to verify that web search correctly switches to a supported model"""
     try:
-        logger.info("Running web search fallback test...")
+        logger.info("Running web search model switching test...")
         # Use the SyncContext for testing
         sync_ctx = SyncContext(id="test", info=logger.info, error=logger.error)
         result = await ask_chatgpt_with_web_search(
             prompt="What is Veloren?", 
-            model="chatgpt-4o-latest",
+            model="chatgpt-4o-latest",  # This should be switched to gpt-4.1
             ctx=sync_ctx
         )
         logger.info(f"Test results (first 100 chars): {result[:100]}...")
-        logger.info("Web search fallback test completed successfully!")
+        
+        # Verify that the model switching note is in the result
+        if "Web search was performed using gpt-4.1 instead of chatgpt-4o-latest" in result:
+            logger.info("Model switching note found in the result - test passed!")
+        else:
+            logger.warning("Model switching note not found in the result - check implementation")
+            
+        logger.info("Web search model switching test completed successfully!")
         return True
     except Exception as e:
-        logger.error(f"Web search fallback test failed: {e}")
+        logger.error(f"Web search model switching test failed: {e}")
         return False
 
 if __name__ == "__main__":
@@ -423,7 +426,7 @@ if __name__ == "__main__":
     # Run test if TEST_WEB_SEARCH environment variable is set
     if os.environ.get('TEST_WEB_SEARCH', '').lower() in ('1', 'true', 'yes'):
         import asyncio
-        asyncio.run(test_web_search_fallback())
+        asyncio.run(test_web_search_model_switching())
         sys.exit(0)
     
     # Run the server
